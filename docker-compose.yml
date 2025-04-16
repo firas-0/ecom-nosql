@@ -34,22 +34,20 @@ services:
 
 
   cart:
-    container_name: e-commerce_cart
-    build: 
+    build:
       context: ./cart
-      dockerfile: Dockerfile
     ports:
-      - 8081:8081
-    networks:
-      - e-commerce_network
-
+      - "8083:8083"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
   redis:
-    image: redis
+    image: "redis:alpine"
+    container_name: redis
     ports:
-      - 6379:6379
-    networks:
-      - e-commerce_network
-
+      - "6379:6379"
   order:
     container_name: e-commerce_order
     build:

@@ -29,7 +29,7 @@ pool.query('SELECT NOW()', (err, res) => {
 });
 
 // Routes
-const ordersRoute = require('./routes/orders');
+const ordersRoute = require('./routes/orders'); // Ensure the correct path and file name
 app.use('/orders', ordersRoute);
 
 // Start server

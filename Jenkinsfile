@@ -7,7 +7,9 @@ pipeline {
                 git 'https://github.com/abdessalamzarrouk/ecom-nosql'
             }
         }
-        
+        triggers{
+            pollSCM '*/5 * * * *'
+        }
         stage('Build Services') {
             steps {
                 sh 'docker compose up --build'

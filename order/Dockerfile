@@ -1,12 +1,19 @@
+# Use Node.js image
 FROM node:18
 
-WORKDIR /usr/src/app/order
+# Set the working directory
+WORKDIR /usr/src/app
 
+# Copy package.json and package-lock.json
 COPY package*.json ./
+
+# Install dependencies
 RUN npm install
 
+# Copy the rest of the application code
 COPY . .
-RUN npm run build
-ENV USER=postgres
-ENV PASSWORD=142536
-CMD ["node","dist/index.js"]
+
+# Expose port for the app
+EXPOSE 8082
+# Run the app
+CMD ["npm", "start"]

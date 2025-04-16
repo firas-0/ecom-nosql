@@ -1,18 +1,4 @@
-version: '3.4'
-
 services:
-  product:
-    container_name: e-commerce_product
-    build: 
-      context: ./product
-      dockerfile: Dockerfile
-    ports:
-      - 8080:8080
-    networks:
-      - e-commerce_network
-    depends_on:
-      - cassandra
-
   cassandra:
     image: cassandra:latest
     container_name: e-commerce_cassandra
@@ -21,13 +7,71 @@ services:
       - CASSANDRA_DC=dc1
       - CASSANDRA_RACK=rack1
     ports:
-      - 9042:9042  # Cassandra default port
+      - 9042:9042
     networks:
       - e-commerce_network
     volumes:
-      - cassandra-data:/var/lib/cassandra  # Mount volume for persistent data
+      - cassandra-data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "DESCRIBE KEYSPACES"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  product:
+    container_name: e-commerce_product
+    build: ./product
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    networks:
+      - e-commerce_network
+    ports:
+      - 8080:8080
+    environment:
+      - NODE_ENV=production
+
+
+  cart:
+    container_name: e-commerce_cart
+    build: 
+      context: ./cart
+      dockerfile: Dockerfile
+    ports:
+      - 8081:8081
+    networks:
+      - e-commerce_network
+
+  redis:
+    image: redis
+    ports:
+      - 6379:6379
+    networks:
+      - e-commerce_network
+
+  order:
+    container_name: e-commerce_order
+    build:
+      context: ./order
+      dockerfile: Dockerfile
+    ports:
+      - 8082:8082
+    networks:
+      - e-commerce_network
+    depends_on:
+      - postgres
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=142536
+      - POSTGRES_DB=order
+      - PORT=8082 
+
   postgres:
     image: postgres
+    container_name: e-commerce_postgres
     ports:
       - 5432:5432
     environment:
@@ -37,12 +81,23 @@ services:
     networks:
       - e-commerce_network
     volumes:
-    - ./order/order.sql:/docker-entrypoint-initdb.d/order.sql
+      - postgres-data:/var/lib/postgresql/data
+      - ./order/order.sql:/docker-entrypoint-initdb.d/order.sql:ro
+
+  nginx:
+    image: nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - e-commerce_network
 
 networks:
   e-commerce_network:
     driver: bridge
-    
+
 volumes:
   cassandra-data:
-    driver: local  # Make sure to define the volume here
+  postgres-data:
+

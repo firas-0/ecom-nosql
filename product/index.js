@@ -10,7 +10,7 @@ const port = 8080;
 const client = new cassandra.Client({
   contactPoints: ['cassandra'],  // Docker container name for Cassandra
   localDataCenter: 'datacenter1',
-  keyspace: 'ecommerce',         // The keyspace we will create in Cassandra
+  keyspace: 'ecommerce',         
 });
 
 client.connect((err) => {
@@ -21,7 +21,7 @@ client.connect((err) => {
   }
 });
 
-// Define a route to add a product
+
 app.post('/products', express.json(), (req, res) => {
   const { id, name, price } = req.body;
 
@@ -35,7 +35,6 @@ app.post('/products', express.json(), (req, res) => {
   });
 });
 
-// Define a route to get a product by ID
 app.get('/products/:id', (req, res) => {
   const query = 'SELECT * FROM products WHERE id = ?';
   client.execute(query, [req.params.id], { prepare: true }, (err, result) => {
@@ -51,7 +50,18 @@ app.get('/products/:id', (req, res) => {
   });
 });
 
-// Start the server
+app.get('/products', async (req, res) => {
+  const query = 'SELECT * FROM products LIMIT 100';
+
+  try {
+    const result = await client.execute(query);
+    res.json(result.rows); // Send the products as JSON
+  } catch (err) {
+    console.error('Error fetching products:', err);
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Product service running at http://localhost:${port}`);
 });

@@ -4,8 +4,11 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/abdessalamzarrouk/ecom-nosql'
+                git branch: 'main', url: 'https://github.com/firas-0/ecom-nosql.git'
             }
+        }
+        triggers{
+            pollSCM '*/5 * * * *'
         }
         
         stage('Build Services') {

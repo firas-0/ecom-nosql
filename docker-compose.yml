@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   cassandra:
     image: cassandra:latest
@@ -32,7 +34,6 @@ services:
     environment:
       - NODE_ENV=production
 
-
   cart:
     build:
       context: ./cart
@@ -43,11 +44,17 @@ services:
       - REDIS_PORT=6379
     depends_on:
       - redis
+    networks:
+      - e-commerce_network
+
   redis:
     image: "redis:alpine"
     container_name: redis
     ports:
       - "6379:6379"
+    networks:
+      - e-commerce_network
+
   order:
     container_name: e-commerce_order
     build:
@@ -65,7 +72,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=142536
       - POSTGRES_DB=order
-      - PORT=8082 
+      - PORT=8082
 
   postgres:
     image: postgres
@@ -83,14 +90,18 @@ services:
       - ./order/order.sql:/docker-entrypoint-initdb.d/order.sql:ro
 
   nginx:
-    image: nginx
+    image: nginx  # Use the official Nginx image
+    container_name: e-commerce_nginx
     ports:
-      - 80:80
+      - "80:80"  # Expose Nginx on port 80
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf  # Mount the custom nginx.conf file
+    depends_on:
+      - product
+      - order
+      - cart
     networks:
       - e-commerce_network
-
 networks:
   e-commerce_network:
     driver: bridge
@@ -98,4 +109,3 @@ networks:
 volumes:
   cassandra-data:
   postgres-data:
-
